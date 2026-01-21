@@ -1,0 +1,35 @@
+The king and the queen rule the kingdom.
+The prince and the princess live in the palace.
+The royal family visits the castle.
+A man and a woman walk through the city.
+The boy and the girl play in the garden.
+The cat chases the mouse.
+The dog barks at the cat.
+A kitten and a puppy are young animals.
+A car drives down the road.
+The truck carries heavy cargo.
+A bike and a scooter are small vehicles.
+The train arrives at the station.
+Apples and oranges are fruit.
+Bananas and grapes are sweet fruit.
+The apple falls from the tree.
+The orange is bright and sweet.
+Coffee and tea are hot drinks.
+The cup holds the coffee.
+The mug holds the tea.
+The sun shines over the mountain.
+The river flows through the valley.
+The ocean meets the shore.
+The sky is blue and clear.
+The night is dark and quiet.
+The moon appears in the night sky.
+Music and art inspire people.
+The painter uses a brush.
+The singer performs a song.
+The guitar plays a melody.
+The student reads a book.
+The teacher writes on the board.
+The class studies language and math.
+Language is a system of words.
+Words can be represented as vectors.
+Vectors capture meaning and context.
