@@ -12,11 +12,26 @@ def tokenize(text: str):
     return re.findall(r"[a-z']+", text.lower())
 
 
-def load_corpus(path: Path):
+def load_corpus(path: Path, max_lines=None, max_tokens=None, progress_every=None):
     tokens = []
+    lines_read = 0
     with path.open("r", encoding="utf-8") as f:
         for line in f:
-            tokens.extend(tokenize(line))
+            lines_read += 1
+            if max_lines is not None and lines_read > max_lines:
+                break
+            line_tokens = tokenize(line)
+            if max_tokens is not None:
+                remaining = max_tokens - len(tokens)
+                if remaining <= 0:
+                    break
+                if len(line_tokens) > remaining:
+                    line_tokens = line_tokens[:remaining]
+            tokens.extend(line_tokens)
+            if progress_every and lines_read % progress_every == 0:
+                print(f"Loaded {lines_read} lines, {len(tokens)} tokens...")
+            if max_tokens is not None and len(tokens) >= max_tokens:
+                break
     return tokens
 
 
@@ -30,7 +45,7 @@ def build_vocab(tokens, min_count):
     return vocab, word_to_id, counts
 
 
-def build_cooccurrence(tokens, word_to_id, window):
+def build_cooccurrence(tokens, word_to_id, window, progress_every=None):
     size = len(word_to_id)
     matrix = np.zeros((size, size), dtype=np.float64)
     for i, center in enumerate(tokens):
@@ -46,6 +61,8 @@ def build_cooccurrence(tokens, word_to_id, window):
             if w_id is None:
                 continue
             matrix[c_id, w_id] += 1.0
+        if progress_every and (i + 1) % progress_every == 0:
+            print(f"Processed {i + 1} tokens for co-occurrence...")
     return matrix
 
 
@@ -67,12 +84,17 @@ def ppmi_matrix(cooc):
     return ppmi
 
 
-def train_embeddings(corpus_path, window, dim, min_count):
-    tokens = load_corpus(corpus_path)
+def train_embeddings(corpus_path, window, dim, min_count, max_lines, max_tokens, progress_every):
+    tokens = load_corpus(
+        corpus_path,
+        max_lines=max_lines,
+        max_tokens=max_tokens,
+        progress_every=progress_every,
+    )
     vocab, word_to_id, counts = build_vocab(tokens, min_count)
     if len(vocab) == 0:
         raise ValueError("No vocabulary items meet min_count; try lowering --min-count.")
-    cooc = build_cooccurrence(tokens, word_to_id, window)
+    cooc = build_cooccurrence(tokens, word_to_id, window, progress_every=progress_every)
     ppmi = ppmi_matrix(cooc)
     u, s, _ = np.linalg.svd(ppmi, full_matrices=False)
     dim = min(dim, u.shape[1])
@@ -113,10 +135,10 @@ def read_pretrained(path: Path):
     return vocab, embeddings
 
 
-def pca_2d(x):
+def pca_3d(x):
     x_centered = x - x.mean(axis=0, keepdims=True)
     _, _, vt = np.linalg.svd(x_centered, full_matrices=False)
-    return x_centered @ vt[:2].T
+    return x_centered @ vt[:3].T
 
 
 def cosine_neighbors(embeddings, vocab, query, top_k):
@@ -139,15 +161,23 @@ def cosine_neighbors(embeddings, vocab, query, top_k):
 
 
 def plot_embeddings(embeddings, vocab, top_words, plot_path):
-    coords = pca_2d(embeddings)
-    plt.figure(figsize=(9, 7))
+    coords = pca_3d(embeddings)
+    if not top_words or top_words <= 0:
+        top_words = len(vocab)
+    top_words = min(top_words, len(vocab))
     xs = coords[:top_words, 0]
     ys = coords[:top_words, 1]
-    plt.scatter(xs, ys, s=40, alpha=0.8)
+    zs = coords[:top_words, 2]
+    fig = plt.figure(figsize=(9, 7))
+    ax = fig.add_subplot(111, projection="3d")
+    ax.scatter(xs, ys, zs, s=30, alpha=0.8)
     for i in range(top_words):
-        plt.text(xs[i] + 0.01, ys[i] + 0.01, vocab[i], fontsize=9)
-    plt.title("Word Embeddings (PCA to 2D)")
-    plt.tight_layout()
+        ax.text(xs[i], ys[i], zs[i], vocab[i], fontsize=8)
+    ax.set_title("Word Embeddings (PCA to 3D)")
+    ax.set_xlabel("PC1")
+    ax.set_ylabel("PC2")
+    ax.set_zlabel("PC3")
+    fig.tight_layout()
     if plot_path:
         plt.savefig(plot_path, dpi=150)
     else:
@@ -162,7 +192,10 @@ def main():
     parser.add_argument("--window", type=int, default=2)
     parser.add_argument("--dim", type=int, default=20)
     parser.add_argument("--min-count", type=int, default=1)
-    parser.add_argument("--top-n", type=int, default=30)
+    parser.add_argument("--max-lines", type=int, default=None)
+    parser.add_argument("--max-tokens", type=int, default=None)
+    parser.add_argument("--progress-every", type=int, default=None)
+    parser.add_argument("--top-n", type=int, default=200)
     parser.add_argument("--plot", type=Path, default=None)
     parser.add_argument("--query", type=str, nargs="*", default=[])
     parser.add_argument("--neighbors", type=int, default=5)
@@ -170,7 +203,13 @@ def main():
 
     if args.mode == "train":
         vocab, embeddings, _ = train_embeddings(
-            args.corpus, args.window, args.dim, args.min_count
+            args.corpus,
+            args.window,
+            args.dim,
+            args.min_count,
+            args.max_lines,
+            args.max_tokens,
+            args.progress_every,
         )
     else:
         vocab, embeddings = read_pretrained(args.pretrained)

@@ -15,6 +15,16 @@ pip install numpy matplotlib
 python src/embedding_demo.py --mode train --corpus data/toy_corpus.txt --window 2 --dim 20 --top-n 30
 ```
 
+## Train on PTB with a subset + progress
+
+```bash
+python src/embedding_demo.py --mode train --corpus ptb.train.txt --max-lines 2000 --progress-every 200
+```
+
+```bash
+python src/embedding_demo.py --mode train --corpus ptb.train.txt --max-tokens 50000 --progress-every 5000
+```
+
 ## Use a pretrained embedding file
 
 ```bash
