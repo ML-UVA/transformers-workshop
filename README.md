@@ -14,29 +14,28 @@ pip install numpy matplotlib
 ### Train a tiny embedding model
 
 ```bash
-python src/embedding_demo.py --mode train --corpus --window 2 --dim 20 --top-n 30
+python part-1/src/embedding_demo.py --mode train --corpus --window 2 --dim 20 --top-n 30
 ```
 
 ### Train on PTB with a subset + progress
 
 ```bash
-python src/embedding_demo.py --mode train --corpus ptb.train.txt --max-lines 2000 --progress-every 200 --top-n 200
+python part-1/src/embedding_demo.py --mode train --corpus part-1/data/ptb.train.txt --max-lines 2000 --progress-every 200 --top-n 200
 ```
 
 ```bash
-python src/embedding_demo.py --mode train --corpus ptb.train.txt --max-tokens 50000 --progress-every 5000
+python part-1/src/embedding_demo.py --mode train --corpus part-1/data/ptb.train.txt --max-tokens 50000 --progress-every 5000
 ```
 
 ### Use a pretrained embedding file
 
 ```bash
-python src/embedding_demo.py --mode pretrained --pretrained data/pretrained_vectors.txt --top-n 30
+python part-1/src/embedding_demo.py --mode pretrained --pretrained part-1/data/pretrained_vectors.txt --top-n 30
 ```
 
 ### Query nearest neighbors
-
 ```bash
-python src/embedding_demo.py --mode train --query king queen car
+python part-1/src/embedding_demo.py --mode train --query king queen car
 ```
 
 
